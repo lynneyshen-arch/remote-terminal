@@ -36,6 +36,31 @@ jobs:
           test -d source/remote_terminal_prototype/android
           test -f source/remote_terminal_prototype/j2me/src/RemoteTerminal.java
 
+      - name: Align Java and Kotlin JVM targets
+        working-directory: source/remote_terminal_prototype/android/app
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("build.gradle")
+          text = path.read_text()
+          marker = " defaultConfig {"
+          settings = ''' compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+              kotlinOptions {
+                  jvmTarget = "17"
+              }
+
+          '''
+          if marker not in text:
+              raise SystemExit("Could not find defaultConfig in app/build.gradle")
+          if 'jvmTarget = "17"' not in text:
+              text = text.replace(marker, settings + marker, 1)
+          path.write_text(text)
+          PY
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
